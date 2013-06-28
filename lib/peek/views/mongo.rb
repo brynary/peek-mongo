@@ -9,7 +9,7 @@ require 'atomic'
 # - :receive_message
 
 # Instrument Mongo time
-class Mongo::Connection
+class Mongo::MongoClient
   class << self
     attr_accessor :command_time, :command_count
   end
@@ -21,8 +21,8 @@ class Mongo::Connection
     send_message_without_timing(*args)
   ensure
     duration = (Time.now - start)
-    Mongo::Connection.command_time.update { |value| value + duration }
-    Mongo::Connection.command_count.update { |value| value + 1 }
+    Mongo::MongoClient.command_time.update { |value| value + duration }
+    Mongo::MongoClient.command_count.update { |value| value + 1 }
   end
   alias_method_chain :send_message, :timing
 
@@ -31,8 +31,8 @@ class Mongo::Connection
     send_message_with_gle_without_timing(*args)
   ensure
     duration = (Time.now - start)
-    Mongo::Connection.command_time.update { |value| value + duration }
-    Mongo::Connection.command_count.update { |value| value + 1 }
+    Mongo::MongoClient.command_time.update { |value| value + duration }
+    Mongo::MongoClient.command_count.update { |value| value + 1 }
   end
   alias_method_chain :send_message_with_gle, :timing
 
@@ -41,8 +41,8 @@ class Mongo::Connection
     receive_message_without_timing(*args)
   ensure
     duration = (Time.now - start)
-    Mongo::Connection.command_time.update { |value| value + duration }
-    Mongo::Connection.command_count.update { |value| value + 1 }
+    Mongo::MongoClient.command_time.update { |value| value + duration }
+    Mongo::MongoClient.command_count.update { |value| value + 1 }
   end
   alias_method_chain :receive_message, :timing
 end
@@ -51,7 +51,7 @@ module Peek
   module Views
     class Mongo < View
       def duration
-        ::Mongo::Connection.command_time.value
+        ::Mongo::MongoClient.command_time.value
       end
 
       def formatted_duration
@@ -64,7 +64,7 @@ module Peek
       end
 
       def calls
-        ::Mongo::Connection.command_count.value
+        ::Mongo::MongoClient.command_count.value
       end
 
       def results
@@ -76,8 +76,8 @@ module Peek
       def setup_subscribers
         # Reset each counter when a new request starts
         before_request do
-          ::Mongo::Connection.command_time.value = 0
-          ::Mongo::Connection.command_count.value = 0
+          ::Mongo::MongoClient.command_time.value = 0
+          ::Mongo::MongoClient.command_count.value = 0
         end
       end
     end
